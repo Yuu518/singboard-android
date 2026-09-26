@@ -1,0 +1,130 @@
+import { ref, onUnmounted, watch } from 'vue'
+import { createClashWS } from '@/api/websocket'
+import { useConfigStore } from './config'
+import { appVisible } from './appVisible'
+import { clashApiReady } from './service'
+import type { TrafficData, MemoryData } from '@/types'
+import type ReconnectingWebSocket from 'reconnecting-websocket'
+
+export interface HistoryPoint {
+  name: number
+  value: number
+}
+
+const MAX_POINTS = 60
+const initHistory = (): HistoryPoint[] =>
+  new Array(MAX_POINTS).fill(0).map((_, i) => ({ name: i, value: 0 }))
+
+export const uploadSpeedHistory = ref<HistoryPoint[]>(initHistory())
+export const downloadSpeedHistory = ref<HistoryPoint[]>(initHistory())
+export const memoryHistory = ref<HistoryPoint[]>(initHistory())
+export const connectionsHistory = ref<HistoryPoint[]>(initHistory())
+
+const currentTraffic = ref<TrafficData>({ up: 0, down: 0 })
+const memory = ref<MemoryData>({ inuse: 0, oslimit: 0 })
+
+let trafficWs: ReconnectingWebSocket | null = null
+let memoryWs: ReconnectingWebSocket | null = null
+let refCount = 0
+
+export function pushConnectionCount(count: number) {
+  const ts = Date.now()
+  connectionsHistory.value = [
+    ...connectionsHistory.value,
+    { name: ts, value: count },
+  ].slice(-MAX_POINTS)
+}
+
+export function useOverviewStore() {
+  const { clashApiEndpoint } = useConfigStore()
+
+  function start() {
+    if (!clashApiReady.value) return
+    if (!trafficWs) {
+      trafficWs = createClashWS('/traffic', (data: TrafficData) => {
+        currentTraffic.value = data
+        const ts = Date.now()
+
+        uploadSpeedHistory.value = [
+          ...uploadSpeedHistory.value,
+          { name: ts, value: data.up },
+        ].slice(-MAX_POINTS)
+
+        downloadSpeedHistory.value = [
+          ...downloadSpeedHistory.value,
+          { name: ts, value: data.down },
+        ].slice(-MAX_POINTS)
+      })
+    }
+    if (!memoryWs) {
+      memoryWs = createClashWS('/memory', (data: MemoryData) => {
+        if (data.inuse === 0) return
+        memory.value = data
+        const ts = Date.now()
+
+        memoryHistory.value = [
+          ...memoryHistory.value,
+          { name: ts, value: data.inuse },
+        ].slice(-MAX_POINTS)
+      })
+    }
+  }
+
+  function stop() {
+    trafficWs?.close()
+    trafficWs = null
+    memoryWs?.close()
+    memoryWs = null
+  }
+
+  refCount++
+  const unwatchApi = watch(
+    () => clashApiEndpoint.value,
+    () => {
+      const connected = !!(trafficWs || memoryWs)
+      stop()
+      uploadSpeedHistory.value = initHistory()
+      downloadSpeedHistory.value = initHistory()
+      memoryHistory.value = initHistory()
+      connectionsHistory.value = initHistory()
+      if (connected) start()
+    },
+  )
+  const unwatchVisible = watch(appVisible, (visible) => {
+    if (visible) {
+      if (!trafficWs && !memoryWs && refCount > 0) start()
+    } else {
+      if (trafficWs || memoryWs) stop()
+    }
+  })
+  const unwatchReady = watch(clashApiReady, (ready) => {
+    if (!ready) stop()
+    else if (appVisible.value && refCount > 0) start()
+  })
+  onUnmounted(() => {
+    unwatchApi()
+    unwatchVisible()
+    unwatchReady()
+    refCount--
+    if (refCount === 0) stop()
+  })
+
+  function resetHistory() {
+    uploadSpeedHistory.value = initHistory()
+    downloadSpeedHistory.value = initHistory()
+    memoryHistory.value = initHistory()
+    connectionsHistory.value = initHistory()
+  }
+
+  return {
+    uploadSpeedHistory,
+    downloadSpeedHistory,
+    memoryHistory,
+    connectionsHistory,
+    currentTraffic,
+    memory,
+    start,
+    stop,
+    resetHistory,
+  }
+}

@@ -1,0 +1,118 @@
+@import './glass.css';
+@import './settings.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Twemoji';
+  src: url('./TwemojiMozilla-flags.woff2') format('woff2');
+  font-display: swap;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family:
+    'SF Pro Text',
+    system-ui,
+    -apple-system,
+    'Segoe UI Variable Text',
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'Noto Sans',
+    'Twemoji',
+    'Segoe UI Emoji',
+    'Apple Color Emoji',
+    'Noto Color Emoji',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  background: var(--page-bg);
+}
+
+html.has-mica,
+html.has-mica body {
+  background: transparent;
+}
+
+.safe-overlay {
+  padding: calc(var(--safe-top) + 1rem) calc(var(--safe-right) + 1rem) calc(var(--safe-bottom) + 1rem)
+    calc(var(--safe-left) + 1rem);
+}
+
+.toast-host {
+  top: calc(var(--safe-top) + 3.5rem);
+  right: calc(var(--safe-right) + 1rem);
+}
+
+.emoji-font {
+  font-family:
+    'Twemoji',
+    'Segoe UI Emoji',
+    'Apple Color Emoji',
+    'Noto Color Emoji',
+    sans-serif;
+}
+
+*,
+*:hover {
+  scrollbar-color: auto;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: oklch(var(--bc) / 0.2);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(var(--bc) / 0.38);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.app-main::-webkit-scrollbar-track {
+  margin-top: calc(var(--safe-top) + 3.25rem);
+  margin-bottom: calc(max(var(--safe-bottom) + 8px, 16px) + 4.5rem);
+}
+
+.card-scroll::-webkit-scrollbar-track {
+  margin-block: 12px;
+}
+
+.card-scroll:has(> .table-pin-rows)::-webkit-scrollbar-track {
+  margin-top: var(--pinned-header-height, 26px);
+  margin-bottom: 12px;
+}
+
+.keyboard-open .liquid-nav,
+.keyboard-open .edge-fade.is-bottom {
+  visibility: hidden;
+  pointer-events: none;
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "singboard",
+  "version": "1.0.0",
+  "identifier": "io.github.Yuu.singboard",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "singboard"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "minSdkVersion": 26
+    }
+  }
+}
