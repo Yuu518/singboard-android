@@ -31,7 +31,7 @@ pub fn init<R: Runtime>() -> TauriPlugin<R> {
         .setup(|app, api| {
             #[cfg(target_os = "android")]
             {
-                let handle = api.register_android_plugin("io.github.Yuu.singboard", "SingboardPlugin")?;
+                let handle = api.register_android_plugin("io.github.Yuu518.singboard", "SingboardPlugin")?;
                 app.manage(Native(handle));
             }
             #[cfg(not(target_os = "android"))]

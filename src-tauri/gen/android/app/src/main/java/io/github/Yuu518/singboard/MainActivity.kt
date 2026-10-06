@@ -1,4 +1,4 @@
-package io.github.Yuu.singboard
+package io.github.Yuu518.singboard
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

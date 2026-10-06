@@ -19,6 +19,6 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--keep class io.github.Yuu.singboard.SingboardPlugin { *; }
--keep class io.github.Yuu.singboard.InstallApkArgs { *; }
--keep class io.github.Yuu.singboard.SystemBarsArgs { *; }
+-keep class io.github.Yuu518.singboard.SingboardPlugin { *; }
+-keep class io.github.Yuu518.singboard.InstallApkArgs { *; }
+-keep class io.github.Yuu518.singboard.SystemBarsArgs { *; }

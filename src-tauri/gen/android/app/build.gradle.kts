@@ -22,9 +22,9 @@ val keystoreProperties = Properties().apply {
 
 android {
     compileSdk = 36
-    namespace = "io.github.Yuu.singboard"
+    namespace = "io.github.Yuu518.singboard"
     defaultConfig {
-        applicationId = "io.github.Yuu.singboard"
+        applicationId = "io.github.Yuu518.singboard"
         minSdk = 26
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
