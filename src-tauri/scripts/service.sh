@@ -63,10 +63,16 @@ start() {
   return 0
 }
 
-stop() {
+signal() {
   pid=$(core_pid) || { rm -f "$PID_FILE"; return 0; }
   record "stopping pid $pid"
   kill -TERM "$pid" 2>/dev/null
+  return 0
+}
+
+stop() {
+  pid=$(core_pid) || { rm -f "$PID_FILE"; return 0; }
+  signal
   i=0
   while [ -n "$(core_pid)" ]; do
     if [ "$i" -ge $((STOP_TIMEOUT * 10)) ]; then
@@ -106,8 +112,9 @@ show_log() {
 case "$1" in
   start) start ;;
   stop) stop ;;
+  signal) signal ;;
   restart) stop && start ;;
   status) status ;;
   log) show_log ;;
-  *) echo "usage: $0 {start|stop|restart|status|log}"; exit 1 ;;
+  *) echo "usage: $0 {start|stop|signal|restart|status|log}"; exit 1 ;;
 esac

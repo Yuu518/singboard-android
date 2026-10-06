@@ -1,5 +1,6 @@
 use serde::Serialize;
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use crate::root::{self, SERVICE_HOME, quote};
 
@@ -8,6 +9,10 @@ const BOOT_SCRIPT: &str = include_str!("../../scripts/boot.sh");
 const BOOT_HOOK_DIR: &str = "/data/adb/service.d";
 const BOOT_HOOK: &str = "/data/adb/service.d/singboard.sh";
 const CLOCK_TICKS: f64 = 100.0;
+const QUICK_TIMEOUT: Duration = Duration::from_secs(10);
+const STOP_TIMEOUT: Duration = Duration::from_secs(60);
+const STOP_POLL: Duration = Duration::from_millis(250);
+const STOP_QUERY_RETRIES: u32 = 3;
 
 static LAST_CPU_SAMPLE: Mutex<Option<CpuSample>> = Mutex::new(None);
 
@@ -97,13 +102,15 @@ fn parse_status(output: &str, previous: Option<CpuSample>) -> (ServiceStatus, Op
     }
 }
 
-async fn run_action(action: &str) -> Result<String, String> {
-    let script = script_path();
-    root::run_async(format!(
+fn action_script(action: &str) -> String {
+    format!(
         "[ -f {s} ] || {{ echo '服务未安装'; exit 1; }}\nsh {s} {action}",
-        s = quote(&script)
-    ))
-    .await
+        s = quote(&script_path())
+    )
+}
+
+async fn run_action(action: &str) -> Result<String, String> {
+    root::run_async(action_script(action)).await
 }
 
 pub(crate) async fn is_running() -> bool {
@@ -112,10 +119,13 @@ pub(crate) async fn is_running() -> bool {
 
 pub(crate) async fn query_status() -> Result<ServiceStatus, String> {
     let script = script_path();
-    let output = root::run_async(format!(
-        "if [ -f {s} ]; then sh {s} status; else echo not_installed; fi",
-        s = quote(&script)
-    ))
+    let output = root::run_async_within(
+        format!(
+            "if [ -f {s} ]; then sh {s} status; else echo not_installed; fi",
+            s = quote(&script)
+        ),
+        QUICK_TIMEOUT,
+    )
     .await?;
     let mut last = LAST_CPU_SAMPLE.lock().map_err(|_| "状态缓存异常".to_string())?;
     let (status, sample) = parse_status(&output, *last);
@@ -128,7 +138,34 @@ pub(crate) async fn start() -> Result<(), String> {
 }
 
 pub(crate) async fn stop() -> Result<(), String> {
-    run_action("stop").await.map(|_| ())
+    let _ = sync_component().await;
+    root::run_async_within(action_script("signal"), QUICK_TIMEOUT).await?;
+    let deadline = Instant::now() + STOP_TIMEOUT;
+    let mut failures = 0;
+    loop {
+        let failure = match query_status().await {
+            Ok(status) if status.state == "running" => None,
+            Ok(status) if status.state == "unknown" => Some("无法获取核心状态".to_string()),
+            Ok(_) => return Ok(()),
+            Err(e) => Some(e),
+        };
+        match failure {
+            Some(e) => {
+                failures += 1;
+                if failures >= STOP_QUERY_RETRIES {
+                    return Err(e);
+                }
+            }
+            None => failures = 0,
+        }
+        if Instant::now() >= deadline {
+            return Err(format!(
+                "sing-box 在 {} 秒内仍未退出；为保持网络规则一致，未强制结束",
+                STOP_TIMEOUT.as_secs()
+            ));
+        }
+        tokio::time::sleep(STOP_POLL).await;
+    }
 }
 
 #[tauri::command]
@@ -151,7 +188,8 @@ pub async fn service_stop() -> Result<(), String> {
 
 #[tauri::command]
 pub async fn service_restart() -> Result<(), String> {
-    run_action("restart").await.map(|_| ())
+    stop().await?;
+    start().await
 }
 
 fn env_content(core: &str, config: &str, working_dir: &str) -> String {
@@ -220,6 +258,10 @@ pub async fn service_install(
 
 #[tauri::command]
 pub async fn service_component_sync() -> Result<String, String> {
+    sync_component().await
+}
+
+async fn sync_component() -> Result<String, String> {
     if !root::enabled() {
         return Ok("not_installed".into());
     }
