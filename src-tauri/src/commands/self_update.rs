@@ -39,7 +39,7 @@ fn asset_candidates() -> Result<[String; 2], String> {
     ])
 }
 
-fn parse_version(text: &str) -> Option<(u64, u64, u64)> {
+pub(crate) fn parse_version(text: &str) -> Option<(u64, u64, u64)> {
     let text = text.trim().trim_start_matches(['v', 'V']);
     let mut parts = text.split('.');
     let major = parts.next()?.parse().ok()?;
