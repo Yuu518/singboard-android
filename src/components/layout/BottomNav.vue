@@ -5,6 +5,7 @@ import { navItems } from './navItems'
 import { backdropLensSupported, buildDisplacementMap, buildLensFilter } from '@/composables/useLiquidLens'
 import { Spring } from '@/utils/spring'
 import { pagerIndex } from '@/stores/pager'
+import { useConfigStore } from '@/stores/config'
 
 const BAR_HEIGHT = 64
 const BAR_PADDING = 4
@@ -15,6 +16,7 @@ const BAR_LENS = { height: 24, amount: 24 }
 const PILL_LENS = { height: 10, amount: 14, spread: 0.08 }
 
 const router = useRouter()
+const { config } = useConfigStore()
 const count = navItems.length
 const uid = Math.random().toString(36).slice(2, 8)
 const barLensId = `nav-bar-lens-${uid}`
@@ -160,7 +162,7 @@ function rebuildLens() {
   defs.replaceChildren()
   pillScales = []
   lensReady.value = false
-  if (!lensSupported || reducedTransparency.matches || width < 2 || tabWidth < 2) return
+  if (!lensSupported || config.value.glassMode !== 'clear' || reducedTransparency.matches || width < 2 || tabWidth < 2) return
   const barWidth = Math.round(width)
   const barMap = mapUrl(barWidth, BAR_HEIGHT, BAR_LENS.height, BAR_LENS.amount, false)
   const pillWidth = Math.round(tabWidth)
@@ -262,6 +264,8 @@ function onTransparencyChange() {
   rebuildLens()
   render()
 }
+
+watch(() => config.value.glassMode, onTransparencyChange)
 
 onMounted(() => {
   measure()
@@ -373,10 +377,10 @@ onBeforeUnmount(() => {
 }
 
 .liquid-nav-glass {
-  background: rgb(var(--glass-rgb) / max(var(--glass-float-alpha), 0.3));
+  background: var(--glass-grain), rgb(var(--glass-rgb) / var(--glass-float-alpha));
   clip-path: inset(0 round 9999px);
-  -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(max(var(--glass-blur), 8px));
-  backdrop-filter: saturate(var(--glass-saturate)) blur(max(var(--glass-blur), 8px));
+  -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+  backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
 }
 
 .liquid-nav-rim {
