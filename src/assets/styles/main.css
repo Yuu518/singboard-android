@@ -111,8 +111,7 @@ html.has-mica body {
   margin-bottom: 12px;
 }
 
-.keyboard-open .liquid-nav,
-.keyboard-open .edge-fade.is-bottom {
+.keyboard-open .liquid-nav {
   visibility: hidden;
   pointer-events: none;
 }

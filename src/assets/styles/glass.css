@@ -148,12 +148,6 @@
   height: calc(var(--safe-top) + 4.5rem);
 }
 
-.edge-fade.is-bottom {
-  bottom: 0;
-  z-index: 39;
-  height: calc(max(var(--safe-bottom) + 8px, 16px) + 64px + 2rem);
-}
-
 .edge-fade::before,
 .edge-fade::after {
   content: '';

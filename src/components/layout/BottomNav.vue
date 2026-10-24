@@ -333,6 +333,7 @@ onBeforeUnmount(() => {
 .liquid-nav {
   --nav-shadow: 0.1;
   --pill-rgb: 0 0 0;
+  --nav-halo: 255 255 255;
   position: fixed;
   z-index: 40;
   right: calc(var(--safe-right) + 24px);
@@ -346,6 +347,7 @@ onBeforeUnmount(() => {
 :global([data-theme='dark'] .liquid-nav) {
   --nav-shadow: 0.2;
   --pill-rgb: 255 255 255;
+  --nav-halo: 0 0 0;
 }
 
 .liquid-nav-defs {
@@ -403,7 +405,6 @@ onBeforeUnmount(() => {
       transparent 100%
     ),
     rgb(255 255 255 / calc(0.06 * var(--glow, 0)));
-  mix-blend-mode: plus-lighter;
 }
 
 .liquid-nav-row {
@@ -418,6 +419,20 @@ onBeforeUnmount(() => {
   color: oklch(var(--p));
   pointer-events: none;
   clip-path: inset(0 100% 0 0);
+}
+
+:global([data-glass='clear'] .liquid-nav-row) {
+  color: oklch(var(--bc));
+}
+
+:global([data-glass='clear'] .liquid-nav-icon) {
+  stroke-width: 2;
+  filter: drop-shadow(0 0 1px rgb(var(--nav-halo) / 0.9)) drop-shadow(0 0 3px rgb(var(--nav-halo) / 0.6));
+}
+
+:global([data-glass='clear'] .liquid-nav-label) {
+  font-weight: 600;
+  text-shadow: 0 0 1px rgb(var(--nav-halo) / 0.9), 0 0 4px rgb(var(--nav-halo) / 0.7);
 }
 
 .liquid-nav-item {
