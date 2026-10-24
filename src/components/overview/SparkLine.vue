@@ -28,6 +28,7 @@ let chart: echarts.ECharts | null = null
 let resizeOb: ResizeObserver | null = null
 
 const options = computed(() => ({
+  animation: false,
   grid: {
     left: 0,
     top: 8,

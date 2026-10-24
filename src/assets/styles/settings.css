@@ -135,7 +135,7 @@
 }
 
 .settings-service-row.is-running .settings-status-dot {
-  animation: settings-status-pulse 2.6s ease-out infinite;
+  animation: settings-status-pulse 2.6s ease-out 3;
 }
 
 @keyframes settings-status-pulse {
